@@ -5,7 +5,8 @@
  * step and no hand-drawn image anywhere in this repo: if a screenshot shows a number, a model
  * produced that number on this machine.
  *
- *   node scripts/shoot.mjs --url http://127.0.0.1:8101 --out screenshots --prefix p01
+ *   node scripts/shoot.mjs --project p01 --url http://127.0.0.1:8101
+ *   node scripts/shoot.mjs --project p02 --url http://127.0.0.1:8102
  *
  * Each shot is taken twice, once in each colour scheme, because the design system defines
  * both and a dark-mode bug is invisible if you only ever screenshot in light.
@@ -22,10 +23,13 @@ const args = Object.fromEntries(
   }, []),
 );
 
-const URL = args.url ?? 'http://127.0.0.1:8101';
+const PROJECT = args.project ?? 'p01';
 const OUT = args.out ?? 'screenshots';
-const PREFIX = args.prefix ?? 'shot';
 const WIDTH = Number(args.width ?? 1440);
+const DEFAULT_URL = { p01: 'http://127.0.0.1:8101', p02: 'http://127.0.0.1:8102' };
+const URL = args.url ?? DEFAULT_URL[PROJECT];
+
+const RUN_TIMEOUT = 20 * 60 * 1000; // extraction on a local model is not fast
 
 await mkdir(OUT, { recursive: true });
 
@@ -36,69 +40,101 @@ async function settle(page) {
   await page.waitForTimeout(250);
 }
 
-async function shoot(page, name, scheme) {
-  await settle(page);
-  const file = path.join(OUT, `${PREFIX}-${name}-${scheme}.png`);
-  await page.screenshot({ path: file, fullPage: true });
-  console.log(`  wrote ${file}`);
+/** Submit the form and wait for results to render. */
+async function submit(page, resultSelector) {
+  await Promise.all([
+    page.waitForURL('**/run', { timeout: RUN_TIMEOUT }),
+    page.click('button[type=submit]'),
+  ]);
+  await page.waitForSelector(resultSelector, { timeout: RUN_TIMEOUT }).catch(() => {});
 }
 
-/**
- * One scripted visit. `steps` receives the page and performs the interaction; whatever it
- * leaves on screen is what gets captured.
- */
-async function visit(browser, scheme, name, steps) {
-  const context = await browser.newContext({
-    colorScheme: scheme,
-    // Deliberately short. `fullPage` grows to fit the content but never shrinks below the
-    // viewport, so a tall viewport pads every screenshot of a short page with dead space.
-    viewport: { width: WIDTH, height: 700 },
-    deviceScaleFactor: 2,
-  });
-  const page = await context.newPage();
-  page.on('pageerror', (e) => console.error(`  ! page error: ${e.message}`));
-  await page.goto(URL, { waitUntil: 'domcontentloaded' });
-  if (steps) await steps(page);
-  await shoot(page, name, scheme);
-  await context.close();
-}
+const SCENARIOS = {
+  p01: [
+    ['1-form', null],
+    [
+      '2-omissions-all-strategies',
+      async (page) => {
+        await page.selectOption('#abstract_id', 't02');
+        await page.selectOption('#level', 'L4_constrained');
+        await page.selectOption('#strategy', '__all__');
+        await submit(page, '.fieldrow');
+      },
+    ],
+    [
+      '3-union-level',
+      async (page) => {
+        await page.selectOption('#abstract_id', 't09');
+        await page.selectOption('#level', 'L5_union');
+        await page.selectOption('#strategy', '__all__');
+        await submit(page, '.fieldrow');
+      },
+    ],
+  ],
+  p02: [
+    ['1-form', null],
+    [
+      // The headline: a narrow retrieval that withholds most of the evidence, and the model
+      // answering regardless. The passage panel is what makes it legible.
+      '2-phantoms-narrow-retrieval',
+      async (page) => {
+        await page.selectOption('#paper_id', 't01');
+        await page.selectOption('#strategy', 'single_query_k4');
+        await submit(page, '.fieldrow');
+      },
+    ],
+    [
+      // The control: same paper, same model, nothing withheld.
+      '3-full-context-control',
+      async (page) => {
+        await page.selectOption('#paper_id', 't01');
+        await page.selectOption('#strategy', 'full_context');
+        await submit(page, '.fieldrow');
+      },
+    ],
+    [
+      // The fix: per-field queries, a third of the context, nearly the control's accuracy.
+      '4-per-field-fix',
+      async (page) => {
+        await page.selectOption('#paper_id', 't01');
+        await page.selectOption('#strategy', 'per_field_n1');
+        await submit(page, '.fieldrow');
+      },
+    ],
+  ],
+};
 
-const RUN_TIMEOUT = 15 * 60 * 1000; // extraction on a local model is not fast
-
-/** Fill the form and wait for the results to come back. */
-function runExtraction({ abstract, level, strategy }) {
-  return async (page) => {
-    await page.selectOption('#abstract_id', abstract);
-    await page.selectOption('#level', level);
-    await page.selectOption('#strategy', strategy);
-    await Promise.all([
-      page.waitForURL('**/run', { timeout: RUN_TIMEOUT }),
-      page.click('button[type=submit]'),
-    ]);
-    await page.waitForSelector('.fieldrow', { timeout: RUN_TIMEOUT }).catch(() => {});
-  };
+const scenarios = SCENARIOS[PROJECT];
+if (!scenarios) {
+  console.error(`unknown project: ${PROJECT}`);
+  process.exit(1);
 }
 
 // `channel: 'chromium'` uses the full browser build rather than the headless shell, which is
-// the one `npx playwright install chromium` actually fetches.
+// what `npx playwright install chromium` actually fetches.
 const browser = await chromium.launch({ channel: 'chromium' });
 
 try {
   for (const scheme of ['light', 'dark']) {
     console.log(`${scheme}:`);
-    await visit(browser, scheme, '1-form', null);
-    await visit(
-      browser,
-      scheme,
-      '2-omissions-all-strategies',
-      runExtraction({ abstract: 't02', level: 'L4_constrained', strategy: '__all__' }),
-    );
-    await visit(
-      browser,
-      scheme,
-      '3-union-level',
-      runExtraction({ abstract: 't09', level: 'L5_union', strategy: '__all__' }),
-    );
+    for (const [name, steps] of scenarios) {
+      const context = await browser.newContext({
+        colorScheme: scheme,
+        // Deliberately short. `fullPage` grows to fit the content but never shrinks below the
+        // viewport, so a tall viewport pads every screenshot of a short page with dead space.
+        viewport: { width: WIDTH, height: 700 },
+        deviceScaleFactor: 2,
+      });
+      const page = await context.newPage();
+      page.on('pageerror', (e) => console.error(`  ! page error: ${e.message}`));
+      await page.goto(URL, { waitUntil: 'domcontentloaded' });
+      if (steps) await steps(page);
+      await settle(page);
+      const file = path.join(OUT, `${PROJECT}-${name}-${scheme}.png`);
+      await page.screenshot({ path: file, fullPage: true });
+      console.log(`  wrote ${file}`);
+      await context.close();
+    }
   }
 } finally {
   await browser.close();
