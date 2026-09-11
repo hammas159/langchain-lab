@@ -31,6 +31,7 @@ const DEFAULT_URL = {
   p02: 'http://127.0.0.1:8102',
   p03: 'http://127.0.0.1:8103',
   p04: 'http://127.0.0.1:8104',
+  p05: 'http://127.0.0.1:8105',
 };
 const URL = args.url ?? DEFAULT_URL[PROJECT];
 
@@ -161,6 +162,39 @@ const SCENARIOS = {
         await page.selectOption('#payload_id', 'loud_persona');
         await page.selectOption('#defence', 'hierarchy');
         await submit(page, '.answer');
+      },
+    ],
+  ],
+  p05: [
+    ['1-form', null],
+    [
+      // One pair, both orders, so a position flip is visible as a flip.
+      '2-position-flip',
+      async (page) => {
+        await page.selectOption('#question_id', 'q1');
+        await page.selectOption('#pair_type', 'tie');
+        await page.selectOption('#prompt', 'plain');
+        await submit(page, '.orders');
+      },
+    ],
+    [
+      // The whole corpus: the longer answer winning every decisive comparison.
+      '3-length-bias',
+      async (page) => {
+        await page.selectOption('#question_id', '__all__');
+        await page.selectOption('#pair_type', 'tie');
+        await page.selectOption('#prompt', 'rubric');
+        await submit(page, '.orders');
+      },
+    ],
+    [
+      // The tie option turning a factually wrong answer into a draw.
+      '4-tie-option-abdicates',
+      async (page) => {
+        await page.selectOption('#question_id', '__all__');
+        await page.selectOption('#pair_type', 'quality');
+        await page.selectOption('#prompt', 'tie_allowed');
+        await submit(page, '.orders');
       },
     ],
   ],
