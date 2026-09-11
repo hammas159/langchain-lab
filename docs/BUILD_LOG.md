@@ -310,6 +310,45 @@ the only comparison the project makes. The test exists to stop a future edit doi
 
 ---
 
+## Project 05
+
+### 20. A confound in the corpus that would have inverted the reading
+
+Quality pairs put a correct answer against one containing a real error. The first draft had the
+`wrong` variants written short and blunt, because a wrong answer is quicker to write than a
+right one.
+
+That would have made "picks the wrong answer" and "picks the shorter answer" the same
+behaviour. With a judge that turns out to prefer length 30 times out of 30, the quality pairs
+would then have measured length preference a second time while appearing to measure accuracy,
+and the two tables would have agreed with each other for the wrong reason.
+
+Two tests now hold the corpus honest: `test_concise_and_wrong_are_similar_in_length` keeps that
+ratio under 1.75, and `test_the_wrong_answer_is_not_the_longest` blocks the opposite error.
+
+### 21. `n/a` in a results table that was a finding, not a formatting bug
+
+The accuracy column for `tie_allowed` on quality pairs rendered as `n/a`, which read like a
+divide-by-zero to paper over.
+
+The denominator really was zero. `tie_allowed` had declared a **tie on 14 of 16 pairs where one
+answer was factually wrong**, so there were no non-tie verdicts left to score. Offered an
+escape hatch, the judge took it and stopped discriminating — including between an answer saying
+indexes make writes faster and one correctly saying they make writes slower.
+
+The fix was to explain the `n/a` in the README rather than to make it disappear.
+
+### 22. Parsing a verdict from the wrong end of a sentence
+
+The judge is told to reply with a single character and frequently replies `"A is better than
+B"`. A verdict parser that searched for the last A/B token would have scored that as a vote for
+**B** — silently inverting an unknown share of the results, with nothing in the output to
+suggest anything had gone wrong.
+
+`parse()` takes the first match, and `test_takes_the_first_verdict_in_a_sentence` pins it.
+
+---
+
 ## Things that turned out not to be true
 
 Kept deliberately. A build log that only records confirmed hypotheses is a marketing document.

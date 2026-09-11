@@ -1,0 +1,194 @@
+[
+  {
+    "prompt": "plain",
+    "pair_type": "tie",
+    "n": 16,
+    "consistent": 14,
+    "flipped": 2,
+    "position_a": 2,
+    "position_b": 0,
+    "ties": 0,
+    "tie_both": 0,
+    "unparsed": 0,
+    "consistent_verbose": 14,
+    "consistent_total": 14,
+    "consistent_correct": 0,
+    "examples": [
+      {
+        "question": "q1",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      },
+      {
+        "question": "q1",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      },
+      {
+        "question": "q2",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      }
+    ]
+  },
+  {
+    "prompt": "plain",
+    "pair_type": "quality",
+    "n": 16,
+    "consistent": 9,
+    "flipped": 7,
+    "position_a": 3,
+    "position_b": 4,
+    "ties": 0,
+    "tie_both": 0,
+    "unparsed": 0,
+    "consistent_verbose": 0,
+    "consistent_total": 9,
+    "consistent_correct": 9,
+    "examples": [
+      {
+        "question": "q1",
+        "forward": "concise first -> B (wrong)",
+        "reversed": "wrong first -> B (concise)"
+      },
+      {
+        "question": "q1",
+        "forward": "concise first -> B (wrong)",
+        "reversed": "wrong first -> B (concise)"
+      },
+      {
+        "question": "q2",
+        "forward": "concise first -> A (concise)",
+        "reversed": "wrong first -> B (concise)"
+      }
+    ]
+  },
+  {
+    "prompt": "tie_allowed",
+    "pair_type": "tie",
+    "n": 16,
+    "consistent": 8,
+    "flipped": 8,
+    "position_a": 0,
+    "position_b": 0,
+    "ties": 14,
+    "tie_both": 6,
+    "unparsed": 0,
+    "consistent_verbose": 2,
+    "consistent_total": 2,
+    "consistent_correct": 0,
+    "examples": [
+      {
+        "question": "q1",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      },
+      {
+        "question": "q1",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      },
+      {
+        "question": "q2",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> TIE (tie)"
+      }
+    ]
+  },
+  {
+    "prompt": "tie_allowed",
+    "pair_type": "quality",
+    "n": 16,
+    "consistent": 14,
+    "flipped": 2,
+    "position_a": 0,
+    "position_b": 0,
+    "ties": 16,
+    "tie_both": 14,
+    "unparsed": 0,
+    "consistent_verbose": 0,
+    "consistent_total": 0,
+    "consistent_correct": 0,
+    "examples": [
+      {
+        "question": "q1",
+        "forward": "concise first -> TIE (tie)",
+        "reversed": "wrong first -> TIE (tie)"
+      },
+      {
+        "question": "q1",
+        "forward": "concise first -> TIE (tie)",
+        "reversed": "wrong first -> TIE (tie)"
+      },
+      {
+        "question": "q2",
+        "forward": "concise first -> TIE (tie)",
+        "reversed": "wrong first -> B (concise)"
+      }
+    ]
+  },
+  {
+    "prompt": "rubric",
+    "pair_type": "tie",
+    "n": 16,
+    "consistent": 14,
+    "flipped": 2,
+    "position_a": 0,
+    "position_b": 0,
+    "ties": 2,
+    "tie_both": 0,
+    "unparsed": 0,
+    "consistent_verbose": 14,
+    "consistent_total": 14,
+    "consistent_correct": 0,
+    "examples": [
+      {
+        "question": "q1",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      },
+      {
+        "question": "q1",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      },
+      {
+        "question": "q2",
+        "forward": "concise first -> B (verbose)",
+        "reversed": "verbose first -> A (verbose)"
+      }
+    ]
+  },
+  {
+    "prompt": "rubric",
+    "pair_type": "quality",
+    "n": 16,
+    "consistent": 10,
+    "flipped": 6,
+    "position_a": 0,
+    "position_b": 2,
+    "ties": 8,
+    "tie_both": 4,
+    "unparsed": 0,
+    "consistent_verbose": 0,
+    "consistent_total": 6,
+    "consistent_correct": 6,
+    "examples": [
+      {
+        "question": "q1",
+        "forward": "concise first -> A (concise)",
+        "reversed": "wrong first -> B (concise)"
+      },
+      {
+        "question": "q1",
+        "forward": "concise first -> A (concise)",
+        "reversed": "wrong first -> B (concise)"
+      },
+      {
+        "question": "q2",
+        "forward": "concise first -> A (concise)",
+        "reversed": "wrong first -> B (concise)"
+      }
+    ]
+  }
+]

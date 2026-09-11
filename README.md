@@ -17,7 +17,7 @@ a billing account is a result nobody checks.
 ## The through-line
 
 Each project takes a technique that is normally shown working and measures the case where it
-does not. Two of the four so far landed somewhere sharper than that:
+does not. Two of the five landed somewhere sharper than that:
 
 > **The metric was wrong before the technique was.**
 
@@ -33,8 +33,14 @@ and one paragraph in the summarisation **prompt** changes everything. Project 04
 category error: every defence tested sorts text into instructions and data, and the only attack
 that works is in the data.
 
-What all four share is the method — hold everything still, vary one thing, and count what
-survives.
+Project 05 is the one that most directly tests a tool people rely on to test other tools. An
+LLM judge is the standard way to evaluate LLM output, and on pairs constructed so that there is
+nothing to judge, it preferred the longer answer **30 times out of 30** — including when told
+not to.
+
+What all five share is the method — hold everything still, vary one thing, and count what
+survives. It is also what produced the negative results: three of the five hypotheses these
+projects were designed around turned out to be wrong, and the build log says which.
 
 ## Projects
 
@@ -44,9 +50,9 @@ survives.
 | 02 | [Retrieval manufactures absences](projects/p02_retrieval_absences/) | Retrieving from a document the model could have read whole cost **53 points of accuracy**, and 69% of the evidence retrieval withheld came back as invented values. Ranking strategies by phantom rate picks the worst one. | 28 |
 | 03 | [Memory that forgets the wrong thing](projects/p03_memory_recall/) | The standard summary+window memory scores **identically to a free sliding window** while charging 5 model calls. The naive summariser keeps **100% of preferences and 0% of hard constraints**. One paragraph in the prompt takes survival from 38% to 100%. | 28 |
 | 04 | [The injection that isn't an instruction](projects/p04_injection_defence/) | The model refuses **every** instruction a document gives it and believes **every** fact it states. The one attack that lands, lands 100% of the time under every defence — because instruction-hierarchy defences sort text into instructions and data, and this is an attack on the data. | 30 |
+| 05 | [The judge prefers the longer answer](projects/p05_judge_bias/) | **30 out of 30** decisive comparisons of two equally correct answers went to the longer one, including under a rubric saying length is not a criterion. Adding a tie option fixed that and made the judge call a tie on **14 of 16** pairs where one answer was factually wrong. | 29 |
 
-One more is planned and not yet written. It is named at the bottom, deliberately without
-numbers, because nothing in this repo claims a result it has not produced.
+All five are built. Every number above came from a benchmark run on this machine.
 
 ### 01 · Structured output under pressure — 43 tests
 
@@ -124,6 +130,26 @@ the filter detects is the register, not the attack.
 - **Out:** whether the injection succeeded, and **whether the defence removed it or the model
   declined it** — only the first is a property of the defence
 
+### 05 · The judge prefers the longer answer — 29 tests
+
+Eight questions, each with a concise correct answer, a verbose correct answer carrying the same
+facts, and one containing a real error. Every pair judged **in both orders**, under three judge
+prompts.
+
+The instrument is the **tie pair**: two answers of equal correctness differing only in length,
+so there is no quality signal and every preference recorded is bias. The judge chose the longer
+answer **30 times out of 30**. The concise answer never won once — including under a prompt
+that says *"Length is not a criterion… do not reward elaboration."*
+
+The obvious repair, letting the judge answer TIE, removes the forced-choice artefact and
+replaces it with a worse one: it then declared a tie on **14 of 16 pairs where one answer was
+factually wrong**. Given an escape hatch, the judge stopped judging.
+
+- **Stack:** `langchain-core`, `langchain-ollama`, FastAPI + Jinja2
+- **In:** an answer pair and a judge prompt
+- **Out:** the verdict in both orders, with flips separated from verdicts — fewer than 6 in 10
+  `plain` verdicts survive a reorder, and the survivors are 100% accurate
+
 ## Why fabrication is scored separately
 
 Most structured-output evaluations report one number: did it validate. That number is why
@@ -168,12 +194,13 @@ cd langchain-lab
 make install
 ollama pull qwen2.5:3b-instruct
 
-make test          # 129 tests, no GPU and no ollama needed
+make test          # 158 tests, no GPU and no ollama needed
 make bench         # regenerates both RESULTS.md files from real calls
 make web01         # http://127.0.0.1:8101  project 01
 make web02         # http://127.0.0.1:8102  project 02
 make web03         # http://127.0.0.1:8103  project 03
 make web04         # http://127.0.0.1:8104  project 04
+make web05         # http://127.0.0.1:8105  project 05
 ```
 
 ## Layout
@@ -197,7 +224,12 @@ projects/
     retrieval.py     embedding retrieval, the per-field fix, and the full-context control
     pipeline.py      retrieve -> extract -> classify by what the model could have known
     benchmark.py     writes RESULTS.md
-    web.py           the live UI: fields beside the passages that did and did not reach
+    web.py           the live UI
+  p05_judge_bias/
+    answers.py       tie pairs (equal quality, different length) and quality pairs
+    judge.py         three judge prompts, every pair run in both orders
+    benchmark.py     writes RESULTS.md
+    web.py           the live UI: both orders side by side, so a flip reads as a flip: fields beside the passages that did and did not reach
                      the model, which is the only way a phantom is visible
   p03_memory_recall/
     conversation.py  24 turns with 12 facts planted at known indices
@@ -211,6 +243,11 @@ projects/
     scoring.py       separates "the filter removed it" from "the model declined it"
     benchmark.py     writes RESULTS.md
     web.py           the live UI
+  p05_judge_bias/
+    answers.py       tie pairs (equal quality, different length) and quality pairs
+    judge.py         three judge prompts, every pair run in both orders
+    benchmark.py     writes RESULTS.md
+    web.py           the live UI: both orders side by side, so a flip reads as a flip
 scripts/shoot.mjs    drives the real app in a real browser for the screenshots
 docs/BUILD_LOG.md    what went wrong while building this
 ```
@@ -223,7 +260,7 @@ to run the benchmarks and the UI. These numbers were produced on a Quadro RTX 50
 ## Tests
 
 ```bash
-make test        # 129, deselects the `live` mark
+make test        # 158, deselects the `live` mark
 make test-live   # adds the tests that need a running ollama
 ```
 
@@ -236,7 +273,7 @@ warm is a test suite nobody runs. CI runs the pure set on every push.
 Every image in this repo is a real capture of the running app, taken by
 `scripts/shoot.mjs` driving Chromium. Nothing is a mockup. Each is shot in both colour schemes,
 because the design system defines both and a dark-mode bug is invisible if you only screenshot
-in light. 30 images so far: 6 for project 01 and 8 for each of 02, 03 and 04.
+in light. 38 images: 6 for project 01 and 8 for each of 02, 03, 04 and 05.
 
 The one worth opening is project 02's narrow-retrieval view, because it shows something the
 extracted JSON cannot: the fields on the left, and on the right the passage holding the answers
@@ -251,8 +288,8 @@ extracted JSON cannot: the fields on the left, and on the right the passage hold
   that break.
 - **It does not benchmark LangChain against alternatives.** LangChain is the tool here, not the
   subject.
-- **It does not yet contain five projects.** Four are finished. The others are named below and
-  nothing is claimed for them.
+- **It contains five projects, and that is the whole set.** Nothing further is planned here;
+  the next labs are separate repos.
 
 ## Problems hit while building this
 

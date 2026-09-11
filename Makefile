@@ -13,7 +13,7 @@ lint:
 	uv run ruff check shared projects tests scripts
 	uv run ruff format --check shared projects tests
 
-bench: bench01 bench02 bench03 bench04
+bench: bench01 bench02 bench03 bench04 bench05
 
 bench01:
 	uv run python -m projects.p01_structured_output.benchmark --full
@@ -37,6 +37,7 @@ shots:
 	node scripts/shoot.mjs --project p02
 	node scripts/shoot.mjs --project p03
 	node scripts/shoot.mjs --project p04
+	node scripts/shoot.mjs --project p05
 
 models:
 	ollama pull qwen2.5:3b-instruct
@@ -52,3 +53,9 @@ bench04:
 
 web04:
 	uv run uvicorn projects.p04_injection_defence.web:app --reload --port 8104
+
+bench05:
+	uv run python -m projects.p05_judge_bias.benchmark --repeats 2
+
+web05:
+	uv run uvicorn projects.p05_judge_bias.web:app --reload --port 8105
