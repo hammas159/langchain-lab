@@ -119,8 +119,8 @@ fabrication rate means.
 make install
 ollama pull qwen2.5:3b-instruct
 
-make bench                  # regenerates RESULTS.md; nothing in this README is typed by hand
-make web                    # http://127.0.0.1:8101
+make bench01                # regenerates RESULTS.md; nothing in this README is typed by hand
+make web01                  # http://127.0.0.1:8101
 ```
 
 The web UI runs a single abstract through any or all four strategies live and marks every

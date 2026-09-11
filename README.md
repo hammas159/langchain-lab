@@ -121,8 +121,9 @@ make install
 ollama pull qwen2.5:3b-instruct
 
 make test          # 69 tests, no GPU and no ollama needed
-make bench         # regenerates RESULTS.md from real calls
-make web           # http://127.0.0.1:8101
+make bench         # regenerates both RESULTS.md files from real calls
+make web01         # http://127.0.0.1:8101  project 01
+make web02         # http://127.0.0.1:8102  project 02
 ```
 
 ## Layout
@@ -146,6 +147,8 @@ projects/
     retrieval.py     embedding retrieval, the per-field fix, and the full-context control
     pipeline.py      retrieve -> extract -> classify by what the model could have known
     benchmark.py     writes RESULTS.md
+    web.py           the live UI: fields beside the passages that did and did not reach
+                     the model, which is the only way a phantom is visible
 scripts/shoot.mjs    drives the real app in a real browser for the screenshots
 docs/BUILD_LOG.md    what went wrong while building this
 ```
@@ -171,7 +174,13 @@ warm is a test suite nobody runs. CI runs the pure set on every push.
 Every image in this repo is a real capture of the running app, taken by
 `scripts/shoot.mjs` driving Chromium. Nothing is a mockup. Each is shot in both colour schemes,
 because the design system defines both and a dark-mode bug is invisible if you only screenshot
-in light.
+in light. 14 images so far, 6 for project 01 and 8 for project 02.
+
+The one worth opening is project 02's narrow-retrieval view, because it shows something the
+extracted JSON cannot: the fields on the left, and on the right the passage holding the answers
+— outlined in red because the retriever ranked it too low to fetch.
+
+![a phantom, and the unretrieved passage that would have prevented it](screenshots/p02-2-phantoms-narrow-retrieval-light.png)
 
 ## What this repo does NOT do
 

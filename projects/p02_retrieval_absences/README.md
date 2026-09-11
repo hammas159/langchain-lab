@@ -113,10 +113,42 @@ make install
 ollama pull qwen2.5:3b-instruct
 ollama pull nomic-embed-text
 
-uv run python -m projects.p02_retrieval_absences.benchmark
+uv run python -m projects.p02_retrieval_absences.benchmark      # writes RESULTS.md
+uv run uvicorn projects.p02_retrieval_absences.web:app --port 8102
 ```
 
-Writes `RESULTS.md`. Every number above comes from it; none is typed by hand.
+Every number above comes from `RESULTS.md`; none is typed by hand.
+
+### Seeing a phantom
+
+The extracted JSON alone cannot show you a phantom — it is a well-typed value in the right
+field. It becomes obvious only when the passage that would have answered it is visible sitting
+unretrieved. So the UI puts the fields and the whole paper side by side:
+
+![narrow retrieval: four phantoms, and the unretrieved passage that would have answered them](../../screenshots/p02-2-phantoms-narrow-retrieval-light.png)
+
+18% recall. On the left, `intervention` comes back as **"intervention group"** and `comparator`
+as **"control group"** — the schema's own field names returned as their values. On the right,
+outlined in red, is the passage the retriever ranked too low to fetch:
+
+> *"Eligible participants were adults with chronic tension headache. Those allocated to the
+> intervention arm received structured exercise therapy. The comparator arm received
+> amitriptyline 25 mg nightly."*
+
+Every answer was in the document. None of it reached the model.
+
+Note also `n_randomised`, `effect`, `p_value` and `registration`, all **honest nulls** — the
+model correctly declined where it had nothing. It is not incapable of refusing. It refuses on
+numbers and returns the question as the answer on strings, which is what a required string field
+under grammar-constrained decoding forces.
+
+### The control, and the fix
+
+The same paper with nothing withheld, and then with per-field queries at a third of the context:
+
+![full context control](../../screenshots/p02-3-full-context-control-light.png)
+
+![per-field retrieval recovers most of the gap](../../screenshots/p02-4-per-field-fix-light.png)
 
 ## What this does NOT do
 
