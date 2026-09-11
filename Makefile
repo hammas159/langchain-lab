@@ -1,4 +1,4 @@
-.PHONY: install test test-live lint bench bench01 bench02 web01 web02 shots models all
+.PHONY: install test test-live lint bench bench01 bench02 bench03 web01 web02 web03 shots models all
 
 install:
 	uv sync --extra dev
@@ -13,7 +13,7 @@ lint:
 	uv run ruff check shared projects tests scripts
 	uv run ruff format --check shared projects tests
 
-bench: bench01 bench02
+bench: bench01 bench02 bench03
 
 bench01:
 	uv run python -m projects.p01_structured_output.benchmark --full
@@ -24,6 +24,9 @@ bench02:
 web01:
 	uv run uvicorn projects.p01_structured_output.web:app --reload --port 8101
 
+web03:
+	uv run uvicorn projects.p03_memory_recall.web:app --reload --port 8103
+
 web02:
 	uv run uvicorn projects.p02_retrieval_absences.web:app --reload --port 8102
 
@@ -32,9 +35,13 @@ shots:
 	npm install
 	node scripts/shoot.mjs --project p01
 	node scripts/shoot.mjs --project p02
+	node scripts/shoot.mjs --project p03
 
 models:
 	ollama pull qwen2.5:3b-instruct
 	ollama pull nomic-embed-text
 
 all: install lint test
+
+bench03:
+	uv run python -m projects.p03_memory_recall.benchmark --repeats 5

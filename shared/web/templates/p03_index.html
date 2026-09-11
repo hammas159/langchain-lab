@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory that forgets the wrong thing</title>
+<link rel="stylesheet" href="/static/design.css">
+<style>
+  .factrow { display: grid; grid-template-columns: 8rem 6.5rem 1fr 5.5rem 5.5rem; gap: 0.6rem;
+             align-items: baseline; padding: 0.45rem 0; border-bottom: 1px solid var(--border); }
+  .factrow:last-child { border-bottom: 0; }
+  .factrow .name { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-2); }
+  .factrow .val  { font-family: var(--mono); font-size: 0.78rem; word-break: break-word; }
+  .factrow.buried { background: color-mix(in srgb, var(--orange) 11%, transparent); }
+  .factrow.lost   { background: color-mix(in srgb, var(--red) 9%, transparent); }
+  pre.ctx { font-size: 0.8rem; line-height: 1.55; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 0.85rem; overflow-x: auto; max-height: 340px; margin: 0;
+            white-space: pre-wrap; font-family: var(--sans); color: var(--ink-2); }
+  .legend { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.83rem; color: var(--ink-2); }
+  .swatch { display: inline-block; width: 0.72rem; height: 0.72rem; border-radius: 3px;
+            vertical-align: -1px; margin-right: 0.3rem; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="wrap">
+    <h1>Memory that forgets the wrong thing</h1>
+    <p>
+      A {{ n_turns }}-turn conversation carrying {{ n_facts }} planted facts, put through four
+      memory strategies. Each fact is checked twice: is the value <em>still in the context</em>,
+      and can the model <em>produce it when asked</em>. Those two disagree, and where they
+      disagree is a fact that is present and unfindable.
+    </p>
+  </div>
+</div>
+
+<div class="wrap stack">
+
+  {% if not server_up %}
+  <div class="card"><h3>ollama is not reachable</h3>
+    <p class="muted small">Start the server and reload.</p></div>
+  {% endif %}
+
+  <form method="post" action="/run" class="card">
+    <div class="grid grid-3">
+      <div class="field">
+        <label for="strategy">Memory strategy</label>
+        <select name="strategy" id="strategy">
+          <option value="__all__" {% if chosen_strategy == '__all__' %}selected{% endif %}>all of them</option>
+          {% for s in strategies %}
+          <option value="{{ s }}" {% if chosen_strategy == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <span class="hint"><code>full</code> is the control at {{ full_words }} words.</span>
+      </div>
+      <div class="field">
+        <label for="window">Window size</label>
+        <select name="window" id="window">
+          {% for w in [4, 6, 8, 12] %}
+          <option value="{{ w }}" {% if chosen_window == w %}selected{% endif %}>{{ w }} turns</option>
+          {% endfor %}
+        </select>
+        <span class="hint">Turns kept verbatim.</span>
+      </div>
+      <div class="field">
+        <label for="model">Model</label>
+        <select name="model" id="model">
+          {% for m in models %}
+          <option value="{{ m }}" {% if chosen_model == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+        <span class="hint">Summarises and answers.</span>
+      </div>
+    </div>
+    <div class="row" style="margin-top:1rem">
+      <button type="submit">Compress and probe</button>
+      <span class="muted small" style="align-self:center">
+        Summarising strategies are not stable run to run. That is a result, not a bug.
+      </span>
+    </div>
+  </form>
+
+  {% if results %}
+  <div class="card legend">
+    <span><span class="swatch" style="background:color-mix(in srgb,var(--orange) 50%,transparent)"></span>
+      buried &mdash; the value is in the context and the model answered "not stated"</span>
+    <span><span class="swatch" style="background:color-mix(in srgb,var(--red) 45%,transparent)"></span>
+      lost &mdash; the value is no longer in the context at all</span>
+  </div>
+
+  {% for r in results %}
+  <div class="card stack">
+    <div class="row" style="justify-content:space-between;align-items:baseline">
+      <h3 style="margin:0">{{ r.label }}</h3>
+      {% if r.crashed %}<span class="tag no">crashed</span>{% endif %}
+    </div>
+
+    {% if r.crashed %}
+      <p class="small" style="color:var(--red)">{{ r.crashed }}</p>
+    {% else %}
+
+    <div class="grid grid-4">
+      <div class="stat">
+        <span class="value {% if r.survived == r.n %}good{% elif r.survived < r.n // 2 %}bad{% endif %}">
+          {{ '%.0f' % (100 * r.survived / r.n) }}%</span>
+        <span class="label">survived</span>
+        <span class="note">{{ r.survived }}/{{ r.n }} values still present</span>
+      </div>
+      <div class="stat">
+        <span class="value {% if r.answered == r.n %}good{% elif r.answered < r.n // 2 %}bad{% endif %}">
+          {{ '%.0f' % (100 * r.answered / r.n) }}%</span>
+        <span class="label">recalled</span>
+        <span class="note">{{ r.answered }}/{{ r.n }} answered correctly</span>
+      </div>
+      <div class="stat">
+        <span class="value {% if r.buried > 0 %}warn{% else %}good{% endif %}">{{ r.buried }}</span>
+        <span class="label">buried</span>
+        <span class="note">present but unfindable</span>
+      </div>
+      <div class="stat">
+        <span class="value">{{ r.words }}</span>
+        <span class="label">context words</span>
+        <span class="note">{{ r.maintenance_calls }} upkeep calls, {{ r.seconds }}s</span>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div>
+        <h4 class="small muted" style="margin:0 0 0.4rem">Each planted fact</h4>
+        <div class="factrow" style="border-bottom:1px solid var(--border-strong)">
+          <span class="name">fact</span><span class="name">kind</span>
+          <span class="name">the model said</span><span class="name">in context</span>
+          <span class="name">recalled</span>
+        </div>
+        {% for p in r.probes %}
+        <div class="factrow {% if p.buried %}buried{% elif not p.survives %}lost{% endif %}">
+          <span class="name">{{ p.fact.id }}</span>
+          <span class="name">{{ p.fact.kind }}</span>
+          <span class="val">{{ p.reply[:54] }}</span>
+          <span>{% if p.survives %}<span class="tag ok">yes</span>{% else %}<span class="tag no">no</span>{% endif %}</span>
+          <span>{% if p.answered %}<span class="tag ok">yes</span>{% else %}<span class="tag no">no</span>{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div>
+        <h4 class="small muted" style="margin:0 0 0.4rem">
+          What this strategy kept
+          ({{ r.verbatim_turns }} turns verbatim, {{ r.summarised_turns }} summarised)
+        </h4>
+        <pre class="ctx">{{ r.context }}</pre>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+</body>
+</html>

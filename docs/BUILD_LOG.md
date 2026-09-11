@@ -223,6 +223,51 @@ phantom.
 
 ---
 
+## Project 03
+
+### 14. The first version of the experiment had the answer written into it
+
+Project 03 asks whether a summarising memory loses the values inside a conversation. The first
+summarisation prompt said:
+
+> *Preserve every specific value: numbers, names, dates, regions, versions, limits and hard
+> rules.*
+
+Every strategy then scored 100% survival and 100% recall, and the finding was "summarisation is
+fine". It was not a finding, it was a prompt that had been told the answer, testing itself.
+
+Splitting it into `summary_naive` (what the tutorials actually say) and `summary_guarded` (the
+same instruction plus that paragraph) turned a null result into the project: 38% survival
+against 100%, same architecture, same call count.
+
+**Lesson:** when writing the thing under test, write the version that is actually deployed
+first. Improving it before measuring it destroys the measurement, and a clean 100% across every
+condition should be read as a broken experiment rather than a good result.
+
+### 15. Two consecutive runs disagreed by 50 points
+
+The naive summariser produced a 191-word summary preserving every value on one run and a
+92-word summary preserving half on the next, at temperature 0. Publishing either would have
+been a claim about one sample of a noisy process.
+
+Hence `--repeats`, and a results table that prints the range wherever runs disagreed. The
+deterministic strategies (`full`, `window`) are still run once: repeating them measures the
+probe's noise rather than the strategy's, and pads the run for nothing.
+
+### 16. A finding that would not reproduce, and was cut
+
+An early run's naive summary inverted a stated preference — the conversation says they prefer a
+blue-green cutover, and the summary said they *"prefer a big-bang switch"*. Summarisation
+corrupting a fact rather than dropping it is a much more alarming failure than omission, since
+a gap is visible and an inversion is not.
+
+It did not reproduce. Across the five committed repeats the preference is stated correctly every
+time. It was written up, then cut from the project README, because a claim a reader cannot check
+against `RESULTS.md` does not belong next to claims they can. It is recorded here instead, as
+one observation that has not been reproduced.
+
+---
+
 ## Things that turned out not to be true
 
 Kept deliberately. A build log that only records confirmed hypotheses is a marketing document.

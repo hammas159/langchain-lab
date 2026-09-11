@@ -26,7 +26,11 @@ const args = Object.fromEntries(
 const PROJECT = args.project ?? 'p01';
 const OUT = args.out ?? 'screenshots';
 const WIDTH = Number(args.width ?? 1440);
-const DEFAULT_URL = { p01: 'http://127.0.0.1:8101', p02: 'http://127.0.0.1:8102' };
+const DEFAULT_URL = {
+  p01: 'http://127.0.0.1:8101',
+  p02: 'http://127.0.0.1:8102',
+  p03: 'http://127.0.0.1:8103',
+};
 const URL = args.url ?? DEFAULT_URL[PROJECT];
 
 const RUN_TIMEOUT = 20 * 60 * 1000; // extraction on a local model is not fast
@@ -99,6 +103,33 @@ const SCENARIOS = {
         await page.selectOption('#paper_id', 't01');
         await page.selectOption('#strategy', 'per_field_n1');
         await submit(page, '.fieldrow');
+      },
+    ],
+  ],
+  p03: [
+    ['1-form', null],
+    [
+      // The standard recommendation with the standard prompt. Loses the whole first half.
+      '2-naive-summary-loses-the-constraints',
+      async (page) => {
+        await page.selectOption('#strategy', 'summary_naive');
+        await submit(page, '.factrow');
+      },
+    ],
+    [
+      // The same architecture, the same call count, one paragraph added to the prompt.
+      '3-guarded-summary-keeps-them',
+      async (page) => {
+        await page.selectOption('#strategy', 'summary_guarded');
+        await submit(page, '.factrow');
+      },
+    ],
+    [
+      // The free baseline the naive summary fails to beat.
+      '4-window-baseline',
+      async (page) => {
+        await page.selectOption('#strategy', 'window');
+        await submit(page, '.factrow');
       },
     ],
   ],
