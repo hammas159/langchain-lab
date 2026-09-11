@@ -165,6 +165,13 @@ def server_is_up(timeout: float = 2.0) -> bool:
 
 
 def installed_tags() -> set[str]:
+    """Model tags present locally, each in both its bare and `:latest` spelling.
+
+    Ollama reports a model pulled as `nomic-embed-text` under the name
+    `nomic-embed-text:latest`. Registry entries use the bare form, so a plain set membership
+    test silently reports a pulled model as missing — and the benchmark then skips it without
+    saying anything, which is the worst possible failure mode for a results table.
+    """
     import httpx
 
     try:
@@ -172,4 +179,13 @@ def installed_tags() -> set[str]:
         response.raise_for_status()
     except Exception:
         return set()
-    return {m["name"] for m in response.json().get("models", [])}
+
+    tags: set[str] = set()
+    for model in response.json().get("models", []):
+        name = model["name"]
+        tags.add(name)
+        if name.endswith(":latest"):
+            tags.add(name.removesuffix(":latest"))
+        else:
+            tags.add(f"{name}:latest")
+    return tags

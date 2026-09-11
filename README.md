@@ -17,18 +17,29 @@ a billing account is a result nobody checks.
 ## The through-line
 
 Each project takes a technique that is normally shown working and measures the case where it
-does not. The first one turned out to be about something sharper than that:
+does not. Both so far have landed somewhere sharper than that:
 
-> **A technique looked worse than the alternative because the metric quietly dropped its
-> failures. Fixing the denominator inverted the conclusion.**
+> **The metric was wrong before the technique was.**
+
+Project 01's accuracy metric quietly dropped its failures, which inverted the conclusion about
+constrained decoding. Project 02's phantom rate has a denominator that *shrinks as the problem
+gets fixed*, so ranking retrieval strategies by it selects the worst one.
+
+Neither is an exotic mistake. Both look like the obvious way to measure the thing until the
+numbers are put side by side.
 
 ## Projects
 
 | | Project | The finding | Tests |
 |---|---|---|---|
 | 01 | [Structured output under pressure](projects/p01_structured_output/) | Grammar-constrained decoding appears **19 points less accurate** than plain prompting, and is really **3x more accurate**. The gap is entirely survivorship bias in the standard metric. | 41 |
+| 02 | [Retrieval manufactures absences](projects/p02_retrieval_absences/) | Retrieving from a document the model could have read whole cost **53 points of accuracy**, and 69% of the evidence retrieval withheld came back as invented values. Ranking strategies by phantom rate picks the worst one. | 28 |
 
-Four more are planned and not yet written. They are listed at the bottom, deliberately
+Both projects landed on the same shape of problem from different directions: **the metric was
+wrong before the technique was.** Project 01's dropped its failures; project 02's has a
+denominator that shrinks as the thing it measures gets fixed.
+
+Three more are planned and not yet written. They are listed at the bottom, deliberately
 without numbers, because nothing in this repo claims a result it has not produced.
 
 ### 01 · Structured output under pressure — 41 tests
@@ -45,6 +56,25 @@ the evaluation method inventing a result.
 - **In:** a trial abstract and a schema, at one of five difficulty levels
 - **Out:** the extracted object, scored field by field, with **fabrication counted separately
   from every other kind of wrong**
+
+### 02 · Retrieval manufactures absences — 28 tests
+
+The same extraction task, with the step every production pipeline adds: retrieve first, then
+extract. That step creates a second kind of absence the model cannot see — the paper states the
+field, retrieval did not fetch it — and the model fills it in almost every time.
+
+Accuracy fell from **82% to 29%** on documents short enough to read whole. The cause is not a
+broken retriever but a query written in **schema vocabulary** against a document written in
+**world vocabulary**: the passage naming the population, intervention and comparator ranks 18th
+of 20, below every piece of generic filler. Querying with the sentence the answer would appear
+in recovers 78% recall in a third of the context.
+
+- **Stack:** `nomic-embed-text` via ollama, cosine similarity in plain Python — no vector
+  database, because 20 passages do not justify one and a dependency that hides the ranking makes
+  the failure harder to see
+- **In:** a paper assembled from labelled passages, and a schema
+- **Out:** every field classified by **what the model could have known** — grounded, phantom,
+  honest null, or a true fabrication
 
 ## Why fabrication is scored separately
 
@@ -76,9 +106,10 @@ that can call tools") rather than a tag, so adding a model is a `pull`, not an e
 | `qwen2.5:7b-instruct` | 7.6B | 32k | yes | the quality ceiling |
 | `nomic-embed-text` | 0.14B | 8k | — | embeddings |
 
-**Only `qwen2.5:3b-instruct` was installed when the current numbers were produced.** The
-benchmark intersects this registry with what is actually pulled and names the models it used,
-so `RESULTS.md` never implies a fleet that was not there.
+**Only `qwen2.5:3b-instruct` and `nomic-embed-text` were installed when the current numbers were
+produced** — the rest are still downloading on a slow connection. The benchmark intersects this
+registry with what is actually pulled and names the models it used, so `RESULTS.md` never
+implies a fleet that was not there.
 
 ## Quick start
 
@@ -89,7 +120,7 @@ cd langchain-lab
 make install
 ollama pull qwen2.5:3b-instruct
 
-make test          # 41 tests, no GPU and no ollama needed
+make test          # 69 tests, no GPU and no ollama needed
 make bench         # regenerates RESULTS.md from real calls
 make web           # http://127.0.0.1:8101
 ```
@@ -109,6 +140,12 @@ projects/
     scoring.py       where fabrication is separated from omission
     benchmark.py     writes RESULTS.md; no number is typed by hand
     web.py           the live UI
+  p02_retrieval_absences/
+    papers.py        papers built from labelled passages, so "was the evidence retrieved?"
+                     is answerable by construction rather than by string-matching
+    retrieval.py     embedding retrieval, the per-field fix, and the full-context control
+    pipeline.py      retrieve -> extract -> classify by what the model could have known
+    benchmark.py     writes RESULTS.md
 scripts/shoot.mjs    drives the real app in a real browser for the screenshots
 docs/BUILD_LOG.md    what went wrong while building this
 ```
@@ -121,7 +158,7 @@ to run the benchmarks and the UI. These numbers were produced on a Quadro RTX 50
 ## Tests
 
 ```bash
-make test        # 41, deselects the `live` mark
+make test        # 69, deselects the `live` mark
 make test-live   # adds the tests that need a running ollama
 ```
 
@@ -143,7 +180,7 @@ in light.
   that break.
 - **It does not benchmark LangChain against alternatives.** LangChain is the tool here, not the
   subject.
-- **It does not yet contain five projects.** One is finished. The others are named below and
+- **It does not yet contain five projects.** Two are finished. The others are named below and
   nothing is claimed for them.
 
 ## Problems hit while building this
@@ -166,8 +203,6 @@ Full account in [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md). A sample:
 
 Not started. Listed so the intent is on record, with no results attached:
 
-- **02 · Semantic cache with a false-hit gate** — a paraphrase cache that returns the *wrong*
-  cached answer, and what it costs to detect that.
 - **03 · Memory that forgets the wrong thing** — summarisation buffers measured on fact recall
   against turn count.
 - **04 · Indirect prompt injection** — where the injection arrives inside a retrieved document
