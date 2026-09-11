@@ -172,6 +172,57 @@ works on every example you think to try.
 
 ---
 
+---
+
+## Project 02
+
+### 10. Retrieval recall of 9% looked like a bug, and was the finding
+
+The first coverage numbers were so bad they read as broken code: at k=2 the retriever fetched
+evidence for 1 field in 11. The instinct was to go looking for a mismatch between the embedding
+of the query and the embedding of the passages.
+
+Printing the **full ranking** instead of the metric settled it in one look. Scores were sensible,
+well separated and correctly ordered — and the passage carrying `population`, `intervention` and
+`comparator` sat 18th of 20, below every piece of generic filler.
+
+The query was the problem. It was built from the schema's field names, the way a real extraction
+pipeline builds one, and abstract field names resemble abstract methodological prose far more
+than they resemble a sentence about chronic tension headache.
+
+**Lesson:** when a retrieval metric looks broken, read the ranking before reading the code. A
+ranking that is *correct and useless* looks identical to a bug from the metric alone.
+
+### 11. `nomic-embed-text` is reported as `nomic-embed-text:latest`
+
+The registry stores the bare tag; ollama's `/api/tags` returns it suffixed. A set-membership
+check therefore said a model that was pulled and working was missing, and the benchmark would
+have skipped it **without saying anything** — a silently narrower results table, which is the
+worst failure mode available to a benchmark. `installed_tags()` now returns both spellings.
+
+### 12. A metric whose denominator shrinks as the problem is fixed
+
+The phantom rate — of the fields retrieval withheld, how many the model filled in anyway — rises
+from 69% to 100% as retrieval gets better, while the phantom *count* falls from 61 to 11.
+
+Both numbers are correct. The rate is conditioned on "fields retrieval withheld", and good
+retrieval withholds fewer and harder fields, so the pipeline that fixed almost everything scores
+worst on the headline. Ranking strategies by phantom rate selects the worst one.
+
+This is the same species of error as project 01's, from the opposite direction: there, failures
+left the denominator; here, the denominator is the thing being improved. Both were the obvious
+way to measure the quantity in question.
+
+### 13. `lucky_phantom` had to exist
+
+A value produced for a field whose evidence was never retrieved is a guess, and 8 of them in the
+`single_query_k4` row happened to be **right**. Scoring those as `grounded_correct` because they
+matched ground truth would have hidden 8 phantoms and overstated grounding. A guess that comes
+out right is still a guess, so it gets its own verdict and is counted as correct *and* as a
+phantom.
+
+---
+
 ## Things that turned out not to be true
 
 Kept deliberately. A build log that only records confirmed hypotheses is a marketing document.
