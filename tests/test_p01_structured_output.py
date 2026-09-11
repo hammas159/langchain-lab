@@ -300,6 +300,25 @@ def test_by_tag_covers_the_whole_fleet():
     assert set(BY_TAG) == {m.tag for m in FLEET}
 
 
+def test_two_fresh_ledgers_are_not_equal():
+    """A plain @dataclass would make these equal, and LangChain deduplicates handlers.
+
+    That silently dropped the second of `callbacks=[inner, outer]`, so an outer ledger
+    reported zero calls for work that had happened. `eq=False` is what stops it.
+    """
+    from shared.llm import Ledger
+
+    assert Ledger() != Ledger()
+
+
+def test_a_ledger_stays_usable_as_a_dict_key():
+    """Dedup and lookup both need identity, so it must remain hashable."""
+    from shared.llm import Ledger
+
+    a, b = Ledger(), Ledger()
+    assert len({a, b}) == 2
+
+
 # --- live ------------------------------------------------------------------------------------
 
 live = pytest.mark.skipif(not server_is_up(), reason="ollama is not running")

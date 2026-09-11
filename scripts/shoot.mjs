@@ -30,6 +30,7 @@ const DEFAULT_URL = {
   p01: 'http://127.0.0.1:8101',
   p02: 'http://127.0.0.1:8102',
   p03: 'http://127.0.0.1:8103',
+  p04: 'http://127.0.0.1:8104',
 };
 const URL = args.url ?? DEFAULT_URL[PROJECT];
 
@@ -130,6 +131,36 @@ const SCENARIOS = {
       async (page) => {
         await page.selectOption('#strategy', 'window');
         await submit(page, '.factrow');
+      },
+    ],
+  ],
+  p04: [
+    ['1-form', null],
+    [
+      // The whole finding: the filter strips the loud override and cannot see the quiet one.
+      '2-loud-vs-quiet',
+      async (page) => {
+        await page.selectOption('#payload_id', '__pairs__');
+        await page.selectOption('#defence', 'sanitise');
+        await submit(page, '.answer');
+      },
+    ],
+    [
+      // The strongest prompt defence, defeated by a payload that issues no instruction.
+      '3-hierarchy-defeated-by-a-fact',
+      async (page) => {
+        await page.selectOption('#payload_id', 'quiet_override');
+        await page.selectOption('#defence', 'hierarchy');
+        await submit(page, '.answer');
+      },
+    ],
+    [
+      // The same defence refusing a loud instruction, for contrast.
+      '4-hierarchy-refusing-an-instruction',
+      async (page) => {
+        await page.selectOption('#payload_id', 'loud_persona');
+        await page.selectOption('#defence', 'hierarchy');
+        await submit(page, '.answer');
       },
     ],
   ],
