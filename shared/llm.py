@@ -41,12 +41,19 @@ class Call:
         return self.prompt_tokens + self.completion_tokens
 
 
-@dataclass
+@dataclass(eq=False)
 class Ledger(BaseCallbackHandler):
     """Records every model call made while it is attached.
 
     Attach one per experiment, not one per process: the numbers are only meaningful when the
     boundary of what is being counted is explicit.
+
+    `eq=False` is load-bearing. A plain `@dataclass` generates `__eq__` from the fields, so two
+    freshly created Ledgers — both with an empty `calls` list — compare **equal**. LangChain's
+    callback manager deduplicates handlers, so passing `callbacks=[inner, outer]` silently
+    dropped the second one and the outer ledger reported zero calls for work that had actually
+    happened. Identity comparison is what a callback handler needs; equality by contents is
+    meaningless for it.
     """
 
     calls: list[Call] = field(default_factory=list)

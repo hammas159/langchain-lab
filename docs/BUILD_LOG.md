@@ -268,6 +268,48 @@ one observation that has not been reproduced.
 
 ---
 
+## Project 04
+
+### 17. A flat 17% across every defence read as a broken harness
+
+Five defences, two registers, and every single cell reported 17%. That is what a harness looks
+like when it is not actually varying anything, so the first assumption was a bug.
+
+The per-objective breakdown showed it was the real answer: **one attack succeeding 100% of the
+time and five succeeding 0% of the time**, under every condition. A pooled rate over six
+objectives where one always lands and five never do is a number that describes nothing — it is
+1/6 restated as a percentage.
+
+**Lesson:** a suspiciously flat aggregate is a reason to disaggregate before debugging. The
+constant was the finding.
+
+### 18. `Ledger` is a `@dataclass`, so two empty ledgers compared equal
+
+The benchmark reported **0 model calls** for a run that made 180.
+
+`Ledger` is a dataclass, so Python generates `__eq__` from its fields, and two freshly created
+ledgers both holding an empty `calls` list are therefore **equal**. LangChain deduplicates
+callback handlers, so `callbacks=[inner, outer]` silently collapsed to one and the outer ledger
+saw nothing.
+
+`@dataclass(eq=False)` fixes it — identity is the only sensible comparison for a callback
+handler — and `test_two_fresh_ledgers_are_not_equal` pins it. Same family as project 01's
+`bool`-is-a-subclass-of-`int`: a language default that is reasonable in general and wrong here,
+failing silently rather than loudly.
+
+### 19. The defence that had to be left blind
+
+`sanitise` strips lines matching suspicious patterns, and it catches every loud payload and no
+quiet one. That asymmetry is pinned by two tests, including
+`test_sanitiser_strips_no_quiet_payload`.
+
+The temptation while building it was to add patterns until the quiet set was caught too. That
+would have produced a filter with a 100% block rate and no meaning: a pattern list extended
+until it covers the test set is not a filter, it is a lookup table, and it would have destroyed
+the only comparison the project makes. The test exists to stop a future edit doing it.
+
+---
+
 ## Things that turned out not to be true
 
 Kept deliberately. A build log that only records confirmed hypotheses is a marketing document.
