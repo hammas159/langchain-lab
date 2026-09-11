@@ -17,16 +17,20 @@ a billing account is a result nobody checks.
 ## The through-line
 
 Each project takes a technique that is normally shown working and measures the case where it
-does not. Both so far have landed somewhere sharper than that:
+does not. Two of the three so far landed somewhere sharper than that:
 
 > **The metric was wrong before the technique was.**
 
 Project 01's accuracy metric quietly dropped its failures, which inverted the conclusion about
 constrained decoding. Project 02's phantom rate has a denominator that *shrinks as the problem
-gets fixed*, so ranking retrieval strategies by it selects the worst one.
+gets fixed*, so ranking retrieval strategies by it selects the worst one. Neither is an exotic
+mistake; both look like the obvious way to measure the thing until the numbers are put side by
+side.
 
-Neither is an exotic mistake. Both look like the obvious way to measure the thing until the
-numbers are put side by side.
+Project 03 is not that, and is not filed as though it were. Its finding is about where the
+leverage sits: the memory **architecture** everyone argues about changes nothing, and one
+paragraph in the summarisation **prompt** changes everything. What it shares with the others is
+only the method — hold the architecture still, vary one thing, and count what survives.
 
 ## Projects
 
@@ -34,12 +38,9 @@ numbers are put side by side.
 |---|---|---|---|
 | 01 | [Structured output under pressure](projects/p01_structured_output/) | Grammar-constrained decoding appears **19 points less accurate** than plain prompting, and is really **3x more accurate**. The gap is entirely survivorship bias in the standard metric. | 41 |
 | 02 | [Retrieval manufactures absences](projects/p02_retrieval_absences/) | Retrieving from a document the model could have read whole cost **53 points of accuracy**, and 69% of the evidence retrieval withheld came back as invented values. Ranking strategies by phantom rate picks the worst one. | 28 |
+| 03 | [Memory that forgets the wrong thing](projects/p03_memory_recall/) | The standard summary+window memory scores **identically to a free sliding window** while charging 5 model calls. The naive summariser keeps **100% of preferences and 0% of hard constraints**. One paragraph in the prompt takes survival from 38% to 100%. | 28 |
 
-Both projects landed on the same shape of problem from different directions: **the metric was
-wrong before the technique was.** Project 01's dropped its failures; project 02's has a
-denominator that shrinks as the thing it measures gets fixed.
-
-Three more are planned and not yet written. They are listed at the bottom, deliberately
+Two more are planned and not yet written. They are listed at the bottom, deliberately
 without numbers, because nothing in this repo claims a result it has not produced.
 
 ### 01 · Structured output under pressure — 41 tests
@@ -75,6 +76,25 @@ in recovers 78% recall in a third of the context.
 - **In:** a paper assembled from labelled passages, and a schema
 - **Out:** every field classified by **what the model could have known** — grounded, phantom,
   honest null, or a true fabrication
+
+### 03 · Memory that forgets the wrong thing — 28 tests
+
+A 24-turn conversation carrying 12 planted facts, put through six memory strategies. Each fact
+is checked twice — is the value still in the context, and can the model produce it — because
+those two failures need different fixes and look identical in any single number.
+
+The standard "summarise the old turns, keep the recent ones" memory scores **42% survival and
+33% recall**. A sliding window that bins the old turns scores **42% and 33%**. The summary
+contributed nothing measurable and charged 5 model calls per conversation for it.
+
+Broken down by kind, the naive summariser keeps **100% of soft preferences and 0% of hard
+constraints** — it retains *"we'd ideally prefer blue-green"* and drops *"customer data must
+never leave eu-west-1, that's a legal requirement"*, every run. Adding one paragraph to the
+summarisation prompt takes survival from 38% to 100% at the same cost.
+
+- **Stack:** `langchain-core`, `langchain-ollama`, FastAPI + Jinja2
+- **In:** a conversation and a memory strategy
+- **Out:** every planted fact scored for survival and recall, by kind and by position
 
 ## Why fabrication is scored separately
 
@@ -120,10 +140,11 @@ cd langchain-lab
 make install
 ollama pull qwen2.5:3b-instruct
 
-make test          # 69 tests, no GPU and no ollama needed
+make test          # 97 tests, no GPU and no ollama needed
 make bench         # regenerates both RESULTS.md files from real calls
 make web01         # http://127.0.0.1:8101  project 01
 make web02         # http://127.0.0.1:8102  project 02
+make web03         # http://127.0.0.1:8103  project 03
 ```
 
 ## Layout
@@ -149,6 +170,12 @@ projects/
     benchmark.py     writes RESULTS.md
     web.py           the live UI: fields beside the passages that did and did not reach
                      the model, which is the only way a phantom is visible
+  p03_memory_recall/
+    conversation.py  24 turns with 12 facts planted at known indices
+    memories.py      six strategies; the naive/guarded prompt pair is the variable
+    probe.py         survival (string check) and recall (ask the model), kept separate
+    benchmark.py     writes RESULTS.md, with repeats because the naive summariser is noisy
+    web.py           the live UI
 scripts/shoot.mjs    drives the real app in a real browser for the screenshots
 docs/BUILD_LOG.md    what went wrong while building this
 ```
@@ -161,7 +188,7 @@ to run the benchmarks and the UI. These numbers were produced on a Quadro RTX 50
 ## Tests
 
 ```bash
-make test        # 69, deselects the `live` mark
+make test        # 97, deselects the `live` mark
 make test-live   # adds the tests that need a running ollama
 ```
 
@@ -174,7 +201,7 @@ warm is a test suite nobody runs. CI runs the pure set on every push.
 Every image in this repo is a real capture of the running app, taken by
 `scripts/shoot.mjs` driving Chromium. Nothing is a mockup. Each is shot in both colour schemes,
 because the design system defines both and a dark-mode bug is invisible if you only screenshot
-in light. 14 images so far, 6 for project 01 and 8 for project 02.
+in light. 22 images so far: 6 for project 01, 8 for project 02, 8 for project 03.
 
 The one worth opening is project 02's narrow-retrieval view, because it shows something the
 extracted JSON cannot: the fields on the left, and on the right the passage holding the answers
@@ -189,7 +216,7 @@ extracted JSON cannot: the fields on the left, and on the right the passage hold
   that break.
 - **It does not benchmark LangChain against alternatives.** LangChain is the tool here, not the
   subject.
-- **It does not yet contain five projects.** Two are finished. The others are named below and
+- **It does not yet contain five projects.** Three are finished. The others are named below and
   nothing is claimed for them.
 
 ## Problems hit while building this
@@ -212,8 +239,6 @@ Full account in [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md). A sample:
 
 Not started. Listed so the intent is on record, with no results attached:
 
-- **03 · Memory that forgets the wrong thing** — summarisation buffers measured on fact recall
-  against turn count.
 - **04 · Indirect prompt injection** — where the injection arrives inside a retrieved document
   rather than the user's message.
 - **05 · LLM-as-judge, biased** — position and length bias measured, then corrected.
