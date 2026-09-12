@@ -1,4 +1,4 @@
-# 04 · The injection that isn't an instruction
+# 04 · The injection that isn't an instruction (LangChain, Ollama, FastAPI)
 
 **Every prompt-injection defence here is built to stop a document from issuing instructions.
 The only attack that works doesn't issue one — it states a fact.**
