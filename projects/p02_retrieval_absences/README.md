@@ -1,4 +1,4 @@
-# 02 · Retrieval manufactures absences
+# 02 · Retrieval manufactures absences (LangChain, Ollama, nomic-embed-text, FastAPI)
 
 **Putting a retriever in front of a document the model could have read whole cost 53 points of
 accuracy, and turned missing evidence into invented values 69% of the time.**

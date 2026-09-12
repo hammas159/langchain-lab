@@ -1,4 +1,4 @@
-# 03 · Memory that forgets the wrong thing
+# 03 · Memory that forgets the wrong thing (LangChain, Ollama, FastAPI)
 
 **The standard summarising memory, with the standard prompt, performs identically to a free
 sliding window — and costs five model calls per conversation to do it.**

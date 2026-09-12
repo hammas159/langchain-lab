@@ -1,4 +1,4 @@
-# 01 · Structured output under pressure
+# 01 · Structured output under pressure (LangChain, Ollama, Pydantic v2, FastAPI)
 
 **A valid document and a correct one are different things, and the metric everyone reports
 cannot tell them apart.**

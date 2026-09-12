@@ -1,4 +1,4 @@
-# 05 · The judge prefers the longer answer, and saying so doesn't help
+# 05 · The judge prefers the longer answer, and saying so doesn't help (LangChain, Ollama, FastAPI)
 
 **In 30 out of 30 decisive comparisons between two equally correct answers, the judge chose the
 longer one — including under a rubric that explicitly told it length was not a criterion.**
