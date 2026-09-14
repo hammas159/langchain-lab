@@ -1,20 +1,41 @@
-# langchain-lab (LangChain, Ollama, FastAPI)
+<h1 align="center">langchain-lab</h1>
+<p align="center"><i>LangChain projects built around the failure each one is usually demoed past</i></p>
 
-[![ci](https://github.com/hammas159/langchain-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/hammas159/langchain-lab/actions/workflows/ci.yml)
-![python](https://img.shields.io/badge/python-3.11%2B-blue)
-![models](https://img.shields.io/badge/models-local%20via%20ollama-success)
-![api%20keys](https://img.shields.io/badge/API%20keys-none%20required-success)
-![license](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <a href="#the-through-line">The through-line</a> &middot;
+  <a href="#projects">Projects</a> &middot;
+  <a href="#the-model-fleet">The model fleet</a> &middot;
+  <a href="#screenshots">Screenshots</a> &middot;
+  <a href="#what-this-repo-does-not-do">What it does NOT do</a> &middot;
+  <a href="#problems-hit-while-building-this">Problems hit</a>
+</p>
 
-**LangChain projects built around the failure each one is usually demoed past.**
-
-Every project here runs entirely on local models through ollama. There is no API key in this
-repo, no hosted call, and no cost — which is the point: a result nobody can reproduce without
-a billing account is a result nobody checks.
+<p align="center">
+  <a href="https://github.com/hammas159/langchain-lab/actions/workflows/ci.yml"><img src="https://github.com/hammas159/langchain-lab/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="python">
+  <img src="https://img.shields.io/badge/models-local%20via%20ollama-success" alt="models">
+  <img src="https://img.shields.io/badge/API%20keys-none%20required-success" alt="api keys">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
+</p>
 
 ---
 
 ## The through-line
+
+```mermaid
+flowchart LR
+    O["local models<br/>via ollama"] --> P["five LangChain projects"]
+    P --> F["each built around<br/>its usual failure mode"]
+    F --> M["measured, not demoed"]
+    M --> R["results anyone can<br/>reproduce for free"]
+
+    style O fill:#16a34a,color:#fff
+    style R fill:#2563eb,color:#fff
+```
+
+No API key, no hosted call, no cost - which is the point. **A result nobody can reproduce
+without a billing account is a result nobody checks.**
+
 
 Each project takes a technique that is normally shown working and measures the case where it
 does not. Two of the five landed somewhere sharper than that:
@@ -312,6 +333,10 @@ Full account in [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md). A sample:
 Not started. Listed so the intent is on record, with no results attached:
 
 - **05 · LLM-as-judge, biased** — position and length bias measured, then corrected.
+
+## Keywords
+
+LangChain &middot; LLM agents &middot; local LLM &middot; Ollama &middot; retrieval-augmented generation &middot; prompt engineering &middot; hallucination &middot; citation fabrication &middot; chains &middot; agent evaluation &middot; FastAPI &middot; open source LLM &middot; reproducible evaluation &middot; no API key &middot; Qwen2.5 &middot; Llama 3.2
 
 ## License
 
