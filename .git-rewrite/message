@@ -1,9 +1,0 @@
-Presentation: centred header, anchor nav, flowchart, keywords
-
-The content was already here. What was missing was a way in - a reader
-landing on the repo had no navigation, no visual summary of the design,
-and no keywords to be found by.
-
-Adds a mermaid flowchart of the actual pipeline, anchor navigation to
-the existing sections, a stack badge, and a keywords block.
-
