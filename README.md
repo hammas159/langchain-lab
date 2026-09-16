@@ -85,7 +85,7 @@ Built to show that constrained decoding invents content. It does not: fabricatio
 property of the model rather than of the decoding method. What the project caught instead was
 the evaluation method inventing a result.
 
-- **Stack:** `langchain-core`, `langchain-ollama`, Pydantic v2, FastAPI + Jinja2
+- **Stack:** `langchain-core`, `langchain-ollama`, Pydantic v2
 - **In:** a trial abstract and a schema, at one of five difficulty levels
 - **Out:** the extracted object, scored field by field, with **fabrication counted separately
   from every other kind of wrong**
@@ -124,7 +124,7 @@ constraints** — it retains *"we'd ideally prefer blue-green"* and drops *"cust
 never leave eu-west-1, that's a legal requirement"*, every run. Adding one paragraph to the
 summarisation prompt takes survival from 38% to 100% at the same cost.
 
-- **Stack:** `langchain-core`, `langchain-ollama`, FastAPI + Jinja2
+- **Stack:** `langchain-core`, `langchain-ollama`
 - **In:** a conversation and a memory strategy
 - **Out:** every planted fact scored for survival and recall, by kind and by position
 
@@ -146,7 +146,7 @@ The pattern filter blocks the loud version of that attack at 100% and the quiet 
 the same objective, the same model, defeated in one register and untouched in the other. What
 the filter detects is the register, not the attack.
 
-- **Stack:** `langchain-core`, `langchain-ollama`, FastAPI + Jinja2
+- **Stack:** `langchain-core`, `langchain-ollama`
 - **In:** a policy document, an injected payload, and a defence
 - **Out:** whether the injection succeeded, and **whether the defence removed it or the model
   declined it** — only the first is a property of the defence
@@ -166,7 +166,7 @@ The obvious repair, letting the judge answer TIE, removes the forced-choice arte
 replaces it with a worse one: it then declared a tie on **14 of 16 pairs where one answer was
 factually wrong**. Given an escape hatch, the judge stopped judging.
 
-- **Stack:** `langchain-core`, `langchain-ollama`, FastAPI + Jinja2
+- **Stack:** `langchain-core`, `langchain-ollama`
 - **In:** an answer pair and a judge prompt
 - **Out:** the verdict in both orders, with flips separated from verdicts — fewer than 6 in 10
   `plain` verdicts survive a reorder, and the survivors are 100% accurate
@@ -217,12 +217,25 @@ ollama pull qwen2.5:3b-instruct
 
 make test          # 158 tests, no GPU and no ollama needed
 make bench         # regenerates both RESULTS.md files from real calls
-make web01         # http://127.0.0.1:8101  project 01
-make web02         # http://127.0.0.1:8102  project 02
-make web03         # http://127.0.0.1:8103  project 03
-make web04         # http://127.0.0.1:8104  project 04
-make web05         # http://127.0.0.1:8105  project 05
 ```
+
+---
+
+## Input / Output
+
+Project 01, where the lab's through-line is clearest: the evaluation method
+inventing a result.
+
+![input](docs/images/input.png)
+
+![output](docs/images/output.png)
+
+*Both accuracy columns are correct arithmetic on the same run. The difference is the
+denominator. Scoring only the outputs that parsed rewards a strategy for failing loudly,
+because its failures leave the sample instead of scoring zero.*
+
+*Fabrication is 27% for every strategy including constrained decoding, which is what the
+project was built to disprove and did not.*
 
 ## Layout
 
@@ -238,37 +251,31 @@ projects/
     strategies.py    the four extraction strategies
     scoring.py       where fabrication is separated from omission
     benchmark.py     writes RESULTS.md; no number is typed by hand
-    web.py           the live UI
   p02_retrieval_absences/
     papers.py        papers built from labelled passages, so "was the evidence retrieved?"
                      is answerable by construction rather than by string-matching
     retrieval.py     embedding retrieval, the per-field fix, and the full-context control
     pipeline.py      retrieve -> extract -> classify by what the model could have known
     benchmark.py     writes RESULTS.md
-    web.py           the live UI
   p05_judge_bias/
     answers.py       tie pairs (equal quality, different length) and quality pairs
     judge.py         three judge prompts, every pair run in both orders
     benchmark.py     writes RESULTS.md
-    web.py           the live UI: both orders side by side, so a flip reads as a flip: fields beside the passages that did and did not reach
                      the model, which is the only way a phantom is visible
   p03_memory_recall/
     conversation.py  24 turns with 12 facts planted at known indices
     memories.py      six strategies; the naive/guarded prompt pair is the variable
     probe.py         survival (string check) and recall (ask the model), kept separate
     benchmark.py     writes RESULTS.md, with repeats because the naive summariser is noisy
-    web.py           the live UI
   p04_injection_defence/
     payloads.py      six objectives x two registers; the loud/quiet split is the experiment
     chain.py         the document, five defences, and the chain that reads both
     scoring.py       separates "the filter removed it" from "the model declined it"
     benchmark.py     writes RESULTS.md
-    web.py           the live UI
   p05_judge_bias/
     answers.py       tie pairs (equal quality, different length) and quality pairs
     judge.py         three judge prompts, every pair run in both orders
     benchmark.py     writes RESULTS.md
-    web.py           the live UI: both orders side by side, so a flip reads as a flip
 scripts/shoot.mjs    drives the real app in a real browser for the screenshots
 docs/BUILD_LOG.md    what went wrong while building this
 ```
@@ -336,7 +343,7 @@ Not started. Listed so the intent is on record, with no results attached:
 
 ## Keywords
 
-LangChain &middot; LLM agents &middot; local LLM &middot; Ollama &middot; retrieval-augmented generation &middot; prompt engineering &middot; hallucination &middot; citation fabrication &middot; chains &middot; agent evaluation &middot; FastAPI &middot; open source LLM &middot; reproducible evaluation &middot; no API key &middot; Qwen2.5 &middot; Llama 3.2
+LangChain &middot; LLM agents &middot; local LLM &middot; Ollama &middot; retrieval-augmented generation &middot; prompt engineering &middot; hallucination &middot; citation fabrication &middot; chains &middot; agent evaluation &middot; open source LLM &middot; reproducible evaluation &middot; no API key &middot; Qwen2.5 &middot; Llama 3.2
 
 ## License
 
