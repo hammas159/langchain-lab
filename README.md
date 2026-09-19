@@ -1,4 +1,4 @@
-<h1 align="center">langchain-lab</h1>
+<h1 align="center">langchain-lab (LangChain · Ollama · Pydantic · httpx)</h1>
 <p align="center"><i>LangChain projects built around the failure each one is usually demoed past</i></p>
 
 <p align="center">
